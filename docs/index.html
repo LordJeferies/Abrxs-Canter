@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Guía de Abrxs-Canter: transcribe videos en tu Mac, crea clips desde el texto, afina cortes en el timeline y exporta montajes.">
+  <title>Abrxs-Canter — Del máster al clip</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#contenido">Ir al contenido</a>
+  <header class="topbar"><a class="brand" href="#inicio"><span class="mark">AC</span>Abrxs-Canter</a><nav aria-label="Principal"><a href="#empezar">Primeros pasos</a><a href="#situaciones">Ejemplos</a><a href="#preguntas">Ayuda</a><a class="repo" href="https://github.com/LordJeferies/Abrxs-Canter">GitHub ↗</a></nav></header>
+  <main id="contenido">
+    <section class="hero" id="inicio">
+      <p class="eyebrow">VIDEO · TEXTO · TIMELINE / MACOS</p>
+      <h1>Del máster a cada clip.<br><span>Con tus palabras.</span></h1>
+      <p class="lead">Transcribe un video, encuentra lo que quieres contar y arma el montaje desde el texto. Ajusta cada corte sobre el original y exporta cuando esté listo.</p>
+      <div class="actions"><a class="button primary" href="https://github.com/LordJeferies/Abrxs-Canter/releases">Ver descargas ↗</a><a class="button" href="#situaciones">Encuentra tu situación ↓</a></div>
+      <p class="small">Línea 3.4.1 · Apple Silicon · Procesamiento local</p>
+      <div class="flow" aria-label="Flujo de trabajo"><div><b>01</b><strong>Prepara</strong><span>Video + transcripción</span></div><div><b>02</b><strong>Construye</strong><span>Texto + bloques</span></div><div><b>03</b><strong>Afina</strong><span>Vista previa + timeline</span></div><div><b>04</b><strong>Exporta</strong><span>MP4 + información</span></div></div>
+    </section>
+
+    <section id="empezar">
+      <div class="section-heading"><p class="eyebrow">EMPIEZA AQUÍ</p><h2>Tu primer proyecto, paso a paso.</h2></div>
+      <div class="two-col"><article class="card"><h3>1. Prepara tu Mac</h3><p>Descarga el ZIP de la release, descomprímelo y copia la aplicación a Aplicaciones. Necesitas FFmpeg, FFprobe, Python 3 y un motor de transcripción con su modelo si vas a transcribir.</p><p>Los modelos y dependencias se instalan por separado. Rust y Cargo solo hacen falta para compilar desde el código fuente.</p><a href="https://github.com/LordJeferies/Abrxs-Canter#requisitos">Ver requisitos e instalación ↗</a><p class="note">La build 3.4.1 se distribuye como prerelease: su normalizador y paquete fueron comprobados; el flujo completo de la nueva build requiere revisión manual. La firma es local, sin notarización de Apple.</p></article><article class="card"><h3>2. Crea o recupera un proyecto</h3><p>En la bienvenida, escribe un nombre en <strong>Proyecto nuevo</strong>, pulsa <strong>Crear y continuar</strong> y elige la carpeta donde guardarás el trabajo.</p><p>Para continuar, abre una tarjeta de <strong>Proyectos anteriores</strong> o usa <strong>Abrir otra carpeta</strong>.</p><p>Usa un proyecto diferente para cada episodio, webinar o video. Los archivos de trabajo, borradores y revisiones se guardan dentro de cada proyecto.</p></article></div>
+      <ol class="steps"><li><strong>Selecciona el máster.</strong> Usa el video original que contiene los fragmentos que vas a cortar.</li><li><strong>Aporta o genera la transcripción.</strong> Si no tienes timestamps por palabra, deja vacío el campo opcional y entra en <strong>Preparar para IA</strong>.</li><li><strong>Importa una ficha o crea el clip.</strong> Elige <strong>Cortar videos</strong> para decisiones externas, o <strong>Abrir editor</strong> para seleccionar texto a mano.</li><li><strong>Comprueba y exporta.</strong> Escucha los límites, afina las entradas y salidas y pulsa <strong>Aplicar y exportar</strong>.</li></ol>
+    </section>
+
+    <section id="situaciones">
+      <div class="section-heading"><p class="eyebrow">¿QUÉ TIENES AHORA?</p><h2>Elige el camino que encaja contigo.</h2><p>Estos ejemplos muestran qué cargar, qué pulsar y qué revisar al terminar.</p></div>
+      <div class="scenarios">
+        <article class="card"><span class="pill">Solo tengo el video</span><h3>Un webinar sin transcripción</h3><ol><li>Crea el proyecto «Webinar».</li><li>En <strong>Preparar para IA</strong>, selecciona el máster y deja vacío <strong>Transcript word-level</strong>.</li><li>Añade marca y estructura si las tienes; pulsa <strong>Crear transcripciones y paquete IA</strong>.</li><li>Revisa el TXT compacto y las palabras dudosas antes de usarlo para decidir cortes.</li></ol><p class="outcome">Obtienes transcripción por palabra, versión compacta y un paquete para llevar a una IA.</p></article>
+        <article class="card"><span class="pill">Tengo video + fichas</span><h3>Un podcast con 21 cortes definidos</h3><ol><li>Crea el proyecto del episodio.</li><li>En <strong>Cortar videos</strong>, carga las decisiones en TXT, Markdown, HTML o JSON.</li><li>Selecciona el máster y, si existe, su transcripción por palabra.</li><li>Elige la forma de exportación y pulsa <strong>Analizar, cortar y exportar</strong>.</li><li>En <strong>Revisar videos</strong>, compara las variantes que tengan conflicto.</li></ol><p class="outcome">Obtienes clips a partir de los tiempos indicados y, cuando hay texto alineable, de los tiempos encontrados en el máster.</p></article>
+        <article class="card"><span class="pill">Quiero elegir a mano</span><h3>Un clip desde la transcripción</h3><ol><li>Prepara el máster y pulsa <strong>Abrir editor</strong>.</li><li>Busca una palabra o frase; <kbd>Enter</kbd> avanza entre coincidencias.</li><li>Selecciona desde la primera hasta la última palabra.</li><li>Pulsa <strong>Ver</strong> para escuchar el rango y <strong>Añadir bloque</strong> para llevarlo al montaje.</li><li>Nombra el clip, previsualízalo y exporta.</li></ol><p class="outcome">La selección de texto se convierte en un rango de tiempo editable.</p></article>
+        <article class="card"><span class="pill">Quiero reordenar fragmentos</span><h3>Hook, desarrollo y cierre de minutos distintos</h3><p>Ejemplo: 5 segundos del minuto 30, 30 segundos del minuto 15 y 25 segundos del minuto 50.</p><ol><li>Añade cada selección como un bloque independiente.</li><li>Usa <strong>↑</strong> y <strong>↓</strong> para ponerlos en el orden de tu historia.</li><li>Reproduce la secuencia; la vista previa salta entre los rangos del máster.</li><li>Ajusta los bordes de cada bloque y exporta el montaje.</li></ol><p class="outcome">Un video compuesto por varios fragmentos, sin incluir el material intermedio.</p></article>
+        <article class="card"><span class="pill">Los tiempos no coinciden</span><h3>El TXT dice 17:49, pero la frase aparece después</h3><p>Incluye el texto literal y los timestamps en la ficha. Si los límites editoriales y los derivados del texto difieren más de un segundo, el programa conserva variantes separadas cuando puede alinear el contenido.</p><ul><li><strong>TIMESTAMP:</strong> usa los tiempos de la ficha.</li><li><strong>TEXT_ALIGNED:</strong> usa los tiempos derivados de las palabras encontradas.</li></ul><p class="outcome">Reproduce ambas versiones y marca la que corresponde. Un archivo de solo tiempos no permite descubrir dónde está una frase.</p></article>
+        <article class="card"><span class="pill">El archivo detecta 0 clips</span><h3>Convertir una ficha que la app no reconoce</h3><ol><li>Pulsa <strong>Crear plantilla para IA</strong>.</li><li>Lleva a la IA la plantilla, el archivo editorial y la transcripción compacta del mismo video.</li><li>Pide el JSON con el contrato exacto de la plantilla, conservando los fragmentos literales y el orden.</li><li>Guarda el resultado y selecciónalo en <strong>Decisiones de corte</strong>.</li></ol><p class="outcome">Un archivo con estructura conocida. Comprueba el inventario y sus tiempos antes de exportar.</p></article>
+      </div>
+    </section>
+
+    <section id="editor" class="dark-section">
+      <p class="eyebrow">EN EL EDITOR</p><h2>El texto decide el contenido.<br>El timeline afina el corte.</h2>
+      <div class="editor-layout"><div><small>IZQUIERDA</small><h3>Transcripción</h3><p>Busca, selecciona palabras y añade rangos. Las frases detectadas son atajos para comenzar.</p></div><div><small>CENTRO</small><h3>Video original</h3><p>Escucha la selección y reproduce la secuencia. La vista previa consulta el máster.</p></div><div><small>DERECHA</small><h3>Montaje</h3><p>Ordena los bloques, divide, une rangos vecinos o elimina una selección.</p></div><div><small>ABAJO</small><h3>Timeline</h3><p>Arrastra los extremos, aumenta el zoom o escribe los segundos de entrada y salida.</p></div></div>
+      <p class="editor-note">Mover bloques y ajustar tiempos modifica el borrador. El video se procesa al pulsar <strong>Aplicar y exportar</strong>.</p>
+    </section>
+
+    <section id="precision">
+      <div class="section-heading"><p class="eyebrow">AJUSTES Y ENTREGAS</p><h2>Haz el último pase con oído.</h2></div>
+      <div class="two-col"><article class="card"><h3>Una palabra entra tarde o se corta al final</h3><p>Selecciona el bloque y arrastra su borde izquierdo o derecho. También puedes usar los botones de <strong>±0.20 s</strong> o escribir el segundo en <strong>Entrada</strong> y <strong>Salida</strong>.</p><p>Para recuperar material anterior o posterior, ajusta sobre el máster en el editor. El recorte rápido de un MP4 exportado solo tiene acceso al contenido que ya está dentro de ese MP4.</p><p><strong>Dividir</strong> parte el bloque en la posición actual. <strong>Unir</strong> fusiona rangos vecinos. <strong>Pulir</strong> une bloques consecutivos separados por un segundo o menos.</p></article><article class="card"><h3>¿Video final o piezas separadas?</h3><p>En <strong>Forma de exportación</strong> elige:</p><ul><li><strong>Solo videos finales:</strong> para revisar o usar el montaje completo.</li><li><strong>Videos finales + secciones necesarias:</strong> para entregar el montaje y seguir trabajando con sus partes.</li><li><strong>Solo secciones:</strong> para llevar los cortes a otro editor.</li></ul><p>Activa <strong>Exportar X-rolls</strong> si tus fichas contienen esos recursos y quieres sus cortes e información separados. Un texto de voiceover es una indicación editorial; no se convierte automáticamente en una voz grabada.</p></article></div>
+      <article class="callout"><h3>Revisar, guardar y continuar</h3><p>En <strong>Revisar videos</strong>, reproduce el resultado, márcalo como aprobado, por corregir o descartado y guarda tus notas. Para cambiar el montaje, vuelve al editor y exporta de nuevo. Usa <kbd>⌘Z</kbd> y <kbd>⇧⌘Z</kbd> para deshacer y rehacer; comprueba <strong>Guardado local</strong> antes de salir.</p></article>
+    </section>
+
+    <section id="ejemplo-txt">
+      <div class="section-heading"><p class="eyebrow">ARCHIVOS EDITORIALES</p><h2>Un ejemplo mínimo para cortar por tiempo.</h2></div>
+      <div class="two-col"><pre aria-label="Ejemplo TXT de dos clips"><code>A01
+Inicio: 00:04:08.120
+Final:  00:04:59.520
+
+A02
+Inicio: 00:17:13.580
+Final:  00:18:15.680</code></pre><div><p>Guárdalo como un archivo <code>.txt</code> y selecciónalo en <strong>Decisiones de corte</strong>. Estos tiempos son ilustrativos: cámbialos por los de tu máster.</p><p>Este formato sirve para cortar por tiempo. Para comprobar desfases por texto, usa fichas con transcripción literal o el JSON definido por la plantilla que genera la app.</p><p>Conserva las palabras originales y representa cada fragmento lejano como una sección distinta. Evita sustituir el diálogo por un resumen.</p></div></div>
+    </section>
+
+    <section id="preguntas">
+      <div class="section-heading"><p class="eyebrow">AYUDA RÁPIDA</p><h2>Antes de volver a procesar.</h2></div>
+      <details><summary>¿La web edita o sube mis videos?</summary><p>No. Esta página es una guía pública. La edición, transcripción y exportación se ejecutan en la aplicación de tu Mac. Si llevas un paquete a una IA externa, tú decides qué archivos compartir.</p></details>
+      <details><summary>¿Por qué pide un motor o un modelo?</summary><p>La app necesita MLX Whisper o whisper.cpp con un modelo para generar la transcripción. Tener FFmpeg permite extraer audio y exportar, pero no sustituye al motor de reconocimiento. Consulta los requisitos del repositorio.</p></details>
+      <details><summary>¿Qué pasa si el máster no tiene audio?</summary><p>No se puede generar una transcripción de voz. Comprueba que hayas elegido la grabación con pista de audio y que sus tiempos correspondan al video que vas a cortar.</p></details>
+      <details><summary>¿Una transcripción compacta es word-level?</summary><p>La compacta agrupa texto en frases para leerlo o enviarlo a una IA. La transcripción por palabra contiene los tiempos de cada palabra y sirve para seleccionar y alinear con más precisión.</p></details>
+      <details><summary>¿Tengo que repetir Whisper para corregir texto?</summary><p>Conserva el máster técnico y revisa las palabras dudosas en <code>REVISAR_TRANSCRIPCION.html</code>. Las salidas derivadas pueden regenerarse desde el máster existente. Repetir toda la transcripción no debe ser el primer paso para cambiar puntuación o corregir palabras.</p></details>
+      <details><summary>¿Cómo trato videos en español e inglés o con música?</summary><p>La línea recuperada usa AUTO como valor predeterminado de whisper.cpp. Escucha y revisa la salida: la detección automática no garantiza que todos los cambios de idioma sean correctos. La música o una repetición real no prueban por sí solas que haya un fallo.</p></details>
+      <details><summary>¿El programa pone subtítulos encima del video?</summary><p>No añade subtítulos incrustados en este flujo. Puede generar un SRT como archivo aparte para que decidas si lo usarás después.</p></details>
+      <details><summary>¿Por qué no abre la descarga en otra Mac?</summary><p>El ZIP es para Apple Silicon y la app tiene firma local, sin notarización. macOS puede solicitar autorización en Privacidad y seguridad. Revisa también las dependencias: el ZIP no incluye modelos ni todos los motores.</p></details>
+      <details><summary>¿Qué hago si aparece información de otro proyecto?</summary><p>Vuelve a Proyectos y abre la tarjeta correcta. Comprueba el nombre y el máster seleccionados. Si los datos siguen mezclados, conserva tus carpetas y reporta el problema antes de exportar sobre un proyecto incorrecto.</p></details>
+    </section>
+    <section class="last"><h2>Empieza con un clip.<br>Revisa, afina y sigue.</h2><div class="actions"><a class="button primary" href="https://github.com/LordJeferies/Abrxs-Canter/releases">Descargas ↗</a><a class="button" href="https://github.com/LordJeferies/Abrxs-Canter/blob/main/GUIA_USO_3.4.md">Guía completa ↗</a><a class="button" href="https://github.com/LordJeferies/Abrxs-Canter/issues">Reportar un problema ↗</a></div></section>
+  </main>
+  <footer><span>Abrxs-Canter · Guía de la línea 3.4.1</span><a href="https://github.com/LordJeferies/Abrxs-Canter">Código y documentación en GitHub ↗</a></footer>
+</body>
+</html>
