@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abrxs-Canter 3.4.1</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="noise"></div>
+  <main class="shell">
+    <header class="topbar">
+      <button id="brandHome" class="brand brand-button" type="button">
+        <div class="mark">AC</div>
+        <div><h1>ABRXS-CANTER</h1><p>Editor local · 3.4.1</p></div>
+      </button>
+      <div id="appStatus" class="status idle"><i></i><span>Listo</span></div>
+    </header>
+
+    <section id="welcomeView" class="welcome-view">
+      <div class="welcome-hero">
+        <p class="eyebrow">PROYECTOS DE VIDEO · TODO LOCAL</p>
+        <h2>¿Qué quieres crear<br><em>hoy?</em></h2>
+        <p>abrxs-Canter conserva cada proyecto, sus transcripciones, cortes y revisiones para que puedas continuar donde lo dejaste.</p>
+      </div>
+      <div class="welcome-grid">
+        <section class="panel new-project-card">
+          <span class="card-kicker">PROYECTO NUEVO</span>
+          <h3>Empieza con un nombre</h3>
+          <p>Después elegirás dónde guardar la carpeta del proyecto.</p>
+          <label class="project-name-field"><span>Nombre del proyecto</span><input id="projectNameInput" type="text" maxlength="80" placeholder="Ej. EP 56 · Amanda" autocomplete="off" /></label>
+          <button id="createProjectBtn" class="primary-btn" type="button" disabled><span>Crear y continuar</span><b>→</b></button>
+        </section>
+        <section class="panel recent-projects-card">
+          <div class="panel-head"><div><span class="step">↺</span><h3>Proyectos anteriores</h3></div><button id="browseProjectBtn" class="text-btn" type="button">Abrir otra carpeta</button></div>
+          <div id="recentProjects" class="recent-projects"><div class="project-loading">Buscando proyectos…</div></div>
+        </section>
+      </div>
+    </section>
+
+    <section id="studioView" class="hidden">
+      <div class="project-strip">
+        <button id="backProjectsBtn" class="back-btn" type="button">← Proyectos</button>
+        <div><small>PROYECTO ACTUAL</small><strong id="activeProjectName">—</strong><span id="activeProjectPath">—</span></div>
+        <button id="revealProjectBtn" class="secondary-btn" type="button">Mostrar carpeta</button>
+      </div>
+
+      <section class="hero studio-hero"><p class="eyebrow">TRANSCRIBIR · DISEÑAR · CORTAR · REVISAR</p><h2>Del máster a cada pieza,<br><em>con evidencia por palabra.</em></h2></section>
+
+      <section class="workspace">
+        <div class="panel setup-panel">
+          <div class="panel-head"><div><span class="step">01</span><h3>Fuentes del proyecto</h3></div><button id="resetBtn" class="text-btn" type="button">Limpiar selección</button></div>
+          <div class="mode-switch" role="group" aria-label="Flujo de trabajo"><button id="prepareMode" class="active" type="button"><b>Preparar para IA</b><span>Transcribir y crear paquete</span></button><button id="cutMode" type="button"><b>Cortar videos</b><span>Importar decisiones editoriales</span></button></div>
+          <div id="editorialField" class="file-field hidden" data-key="editorial"><div class="file-icon">ED</div><div class="file-copy"><label>Decisiones de corte</label><span id="editorialPath">HTML, JSON, Markdown o TXT</span></div><button id="editorialBtn" class="choose-btn" type="button">Seleccionar</button></div>
+          <div class="file-field" data-key="video"><div class="file-icon">MP4</div><div class="file-copy"><label>Video máster</label><span id="videoPath">Video original del episodio</span></div><button id="videoBtn" class="choose-btn" type="button">Seleccionar</button></div>
+          <div class="file-field optional" data-key="transcript"><div class="file-icon">TXT</div><div class="file-copy"><label>Transcript word-level <b>OPCIONAL</b></label><span id="transcriptPath">Si falta, se genera con MLX Whisper</span></div><button id="transcriptBtn" class="choose-btn" type="button">Seleccionar</button></div>
+          <div class="file-field optional" data-key="brand"><div class="file-icon">BR</div><div class="file-copy"><label>Información de marca <b>OPCIONAL</b></label><span id="brandPath">Voz, audiencia, límites y objetivos</span></div><button id="brandBtn" class="choose-btn" type="button">Seleccionar</button></div>
+          <div class="file-field optional" data-key="structure"><div class="file-icon">ST</div><div class="file-copy"><label>Estructura de clips <b>OPCIONAL</b></label><span id="structurePath">Reglas y formatos que debe proponer la IA</span></div><button id="structureBtn" class="choose-btn" type="button">Seleccionar</button></div>
+          <div class="options-grid"><label class="option-select"><span>Forma de exportación</span><select id="exportMode"><option value="assembled" selected>Solo videos finales</option><option value="both">Videos finales + secciones necesarias</option><option value="sections">Solo secciones</option></select></label><label class="toggle-row"><span><strong>Exportar X-rolls</strong><small>Cortes e información separados</small></span><input id="xrollToggle" type="checkbox" checked /><i></i></label></div>
+          <button id="startBtn" class="primary-btn" type="button" disabled><span id="startLabel">Crear transcripciones y paquete IA</span><b>→</b></button>
+        </div>
+
+        <aside class="panel inventory-panel">
+          <div class="panel-head"><div><span class="step">02</span><h3>Piezas detectadas</h3></div><span id="pieceCount" class="count">0</span></div>
+          <div id="inventoryEmpty" class="empty-state"><div class="scan-glyph"><i></i><i></i></div><strong>Primero prepara el máster</strong><span>abrxs-Canter generará una transcripción por palabra, otra compacta y una carpeta lista para llevar a una IA.</span></div>
+          <div id="inventorySummary" class="inventory-summary hidden"></div><div id="pieceList" class="piece-list"></div>
+          <div id="editorialRecovery" class="editorial-recovery hidden"><strong>No se reconocieron clips</strong><span>Crea una plantilla para convertir este archivo con una IA al contrato JSON exacto de abrxs-Canter.</span><button id="createTemplateBtn" class="secondary-btn" type="button">Crear plantilla para IA</button></div>
+        </aside>
+      </section>
+
+      <section id="progressPanel" class="panel progress-panel hidden">
+        <div class="progress-top"><div><span class="step">03</span><div><h3 id="progressTitle">Preparando proyecto</h3><p id="progressDetail">Inicializando…</p></div></div><div class="progress-actions"><button id="openOutputBtn" class="secondary-btn hidden" type="button">Abrir resultado</button><button id="cancelBtn" class="danger-btn" type="button">Cancelar</button></div></div>
+        <div class="global-progress"><div class="bar-label"><span>Proyecto completo</span><b id="globalPercent">0%</b></div><div class="bar"><i id="globalBar"></i></div><div class="metrics"><span><small>PIEZA</small><strong id="pieceMetric">—</strong></span><span><small>TRANSCURRIDO</small><strong id="elapsedMetric">00:00</strong></span><span><small>RESTANTE APROX.</small><strong id="etaMetric">Calculando…</strong></span></div></div>
+        <div class="current-card"><div class="current-head"><div class="thumb"><span id="currentIndex">—</span></div><div><small>PROCESANDO AHORA</small><h4 id="currentTitle">Esperando…</h4><p id="currentStage">Preparando motor local</p></div><b id="piecePercent">0%</b></div><div class="bar piece-bar"><i id="pieceBar"></i></div><div class="piece-eta"><span id="pieceTasks">0 de 0 tareas</span><span id="pieceEta">Estimando tiempo…</span></div></div>
+        <details class="console"><summary>Registro técnico <span>mostrar</span></summary><pre id="logOutput"></pre></details>
+      </section>
+
+      <section id="reviewPanel" class="panel review-panel hidden">
+        <div class="panel-head"><div><span class="step">04</span><h3>Revisar videos</h3></div><span id="reviewCount" class="count">0</span></div>
+        <div class="review-grid"><div id="reviewList" class="review-list"></div><div class="player-column"><div class="player-wrap"><video id="reviewPlayer" controls preload="metadata"></video><strong id="reviewTitle">Selecciona un video</strong><span id="reviewHint">Reproduce, marca el estado o crea un recorte ajustado.</span></div><div id="reviewControls" class="review-controls hidden"><div class="review-status"><button data-status="approved" type="button">✓ Aprobado</button><button data-status="changes" type="button">! Corregir</button><button data-status="rejected" type="button">× Descartado</button></div><textarea id="reviewNote" placeholder="Notas de revisión…"></textarea><button id="saveReviewBtn" class="secondary-btn" type="button">Guardar revisión</button><div class="trim-editor"><div class="trim-head"><strong>Recorte rápido</strong><span>Marca entrada y salida dentro del video exportado</span></div><div class="trim-row"><label>Entrada <input id="trimStart" type="number" min="0" step="0.001" value="0.000" /></label><button id="setInBtn" type="button">Usar posición actual</button><label>Salida <input id="trimEnd" type="number" min="0" step="0.001" /></label><button id="setOutBtn" type="button">Usar posición actual</button></div><button id="exportTrimBtn" class="primary-btn compact" type="button"><span>Exportar copia ajustada</span><b>→</b></button></div></div></div></div>
+      </section>
+
+      <section id="manualPanel" class="panel editor-launch hidden">
+        <div><span class="step">05</span><div><p>EDITOR DE TRANSCRIPCIÓN Y TIMELINE</p><h3>Crea, ordena y afina clips sobre el máster.</h3><span>Selecciona palabras, arma bloques, previsualiza la secuencia y ajusta cada entrada o salida con precisión.</span></div></div>
+        <button id="openEditorBtn" class="primary-btn compact" type="button"><span>Abrir editor</span><b>→</b></button>
+      </section>
+    </section>
+
+    <footer><span>Abrxs-Canter · v3.4.1</span><span>Los archivos permanecen en tu Mac</span></footer>
+  </main>
+
+  <section id="editorView" class="editor-view hidden" aria-label="Editor de clips">
+    <header class="editor-topbar">
+      <button id="closeEditorBtn" class="editor-back" type="button">← Proyecto</button>
+      <div class="editor-title-wrap"><small>ABRXS-CANTER 3.4.1 · BORRADOR</small><input id="editorTitle" type="text" value="Nuevo clip" aria-label="Título del clip" /></div>
+      <div class="editor-history"><button id="undoEditorBtn" type="button" title="Deshacer">↶</button><button id="redoEditorBtn" type="button" title="Rehacer">↷</button><span id="editorAspect">16:9</span></div>
+      <span id="editorSaveState" class="editor-save-state">Guardado local</span>
+      <button id="applyEditorBtn" class="editor-apply" type="button">Aplicar y exportar <b>→</b></button>
+    </header>
+
+    <div class="editor-workspace">
+      <aside class="transcript-pane">
+        <div class="pane-head"><div><small>FUENTE</small><h2>Transcripción</h2></div><span id="wordCount">0 palabras</span></div>
+        <div class="transcript-search"><span>⌕</span><input id="wordSearch" type="search" placeholder="Buscar palabras o frases…" /><button id="clearWordSearch" type="button" title="Limpiar">×</button></div>
+        <div id="searchResultLabel" class="search-result-label">Selecciona desde la primera hasta la última palabra.</div>
+        <div id="transcriptWords" class="transcript-words" tabindex="0"></div>
+        <div class="selection-dock"><div><small>SELECCIÓN</small><strong id="selectionDuration">Sin selección</strong></div><button id="previewSelectionBtn" type="button" disabled>▶ Ver</button><button id="addSelectionBtn" class="accent" type="button" disabled>+ Añadir bloque</button></div>
+      </aside>
+
+      <main class="preview-pane">
+        <div class="preview-toolbar"><span id="sourceBadge">MÁSTER ORIGINAL</span><span id="previewModeLabel">Vista previa sin procesar</span></div>
+        <div class="editor-player-wrap"><video id="editorVideo" preload="metadata"></video><div id="emptyEditorVideo" class="empty-editor-video"><b>AC</b><span>Cargando el máster…</span></div></div>
+        <div class="transport"><button id="previousBlockBtn" type="button">|◀</button><button id="editorPlayBtn" class="transport-play" type="button">▶</button><button id="nextBlockBtn" type="button">▶|</button><strong id="editorTime">00:00.000 / 00:00.000</strong><label>Velocidad <select id="playbackRate"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label></div>
+        <div class="phrase-suggestions"><div class="phrase-suggestion-head"><span>FRASES DETECTADAS</span><small>Atajos; también puedes seleccionar cualquier texto arriba.</small></div><div id="suggestedPhrases" class="suggested-phrases"></div></div>
+      </main>
+
+      <aside class="sequence-pane">
+        <div class="pane-head"><div><small>MONTAJE</small><h2>Bloques</h2></div><span id="editorBlockCount">0</span></div>
+        <div class="sequence-tools"><button id="polishBlocksBtn" type="button">✦ Pulir</button><button id="splitBlockBtn" type="button">✂ Dividir</button><button id="mergeBlockBtn" type="button">⊕ Unir</button></div>
+        <div id="editorSequence" class="editor-sequence"><div class="editor-empty"><b>Tu clip empieza aquí</b><span>Selecciona texto o una frase para crear el primer bloque.</span></div></div>
+        <div id="blockInspector" class="block-inspector hidden">
+          <div class="inspector-head"><strong>Precisión del bloque</strong><button id="deleteBlockBtn" type="button">Eliminar</button></div>
+          <div class="time-fields"><label>Entrada<input id="blockStart" type="number" step="0.001" min="0" /></label><label>Salida<input id="blockEnd" type="number" step="0.001" min="0" /></label></div>
+          <div class="nudge-grid"><button data-edge="start" data-delta="-0.2">Entrada −0.20</button><button data-edge="start" data-delta="0.2">Entrada +0.20</button><button data-edge="end" data-delta="-0.2">Salida −0.20</button><button data-edge="end" data-delta="0.2">Salida +0.20</button></div>
+        </div>
+      </aside>
+    </div>
+
+    <section class="timeline-pane">
+      <div class="timeline-head"><div><strong>Timeline del clip</strong><span id="sequenceDuration">00:00.000</span></div><div><button id="fitTimelineBtn" type="button">Ajustar</button><label>Zoom <input id="timelineZoom" type="range" min="8" max="80" value="28" /></label></div></div>
+      <div id="timelineViewport" class="timeline-viewport"><div id="timelineCanvas" class="timeline-canvas"><div id="timelineRuler" class="timeline-ruler"></div><div id="timelineTrack" class="timeline-track"></div><i id="timelinePlayhead" class="timeline-playhead"></i></div></div>
+      <p class="timeline-help">Arrastra los extremos de cada bloque para extenderlo o retraerlo sobre el video original. El timeline modifica datos; el video se procesa únicamente al exportar.</p>
+    </section>
+  </section>
+  <script src="app.js"></script>
+</body>
+</html>

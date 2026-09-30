@@ -1,0 +1,20 @@
+[package]
+name = "abrxs-canter"
+version = "3.4.1"
+description = "Estudio local de transcripción, corte y revisión de clips"
+authors = ["abrxs-Canter"]
+edition = "2021"
+
+[lib]
+name = "abrxs_canter_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+tauri = { version = "2.11.5", features = ["protocol-asset"] }
+tauri-plugin-dialog = "2.7.3"
+tauri-plugin-opener = "2.5.5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

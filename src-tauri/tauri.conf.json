@@ -1,0 +1,57 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "abrxs-Canter",
+  "version": "3.4.1",
+  "identifier": "com.abrxs.canter",
+  "build": {
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Abrxs-Canter 3.4.1",
+        "width": 1280,
+        "height": 900,
+        "minWidth": 900,
+        "minHeight": 700,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "backgroundColor": "#f2f0e9"
+      }
+    ],
+    "security": {
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "**"
+        ]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "app",
+      "dmg"
+    ],
+    "category": "Video",
+    "shortDescription": "Estudio local de clips",
+    "longDescription": "Transcribe, diseña, alinea, corta y revisa clips con evidencia por palabra.",
+    "resources": {
+      "../engine/abraxas_local.py": "engine/abraxas_local.py",
+      "../engine/transcript_quality.py": "engine/transcript_quality.py"
+    },
+    "macOS": {
+      "minimumSystemVersion": "12.0"
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns"
+    ]
+  }
+}

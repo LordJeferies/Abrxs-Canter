@@ -1,0 +1,35 @@
+.DS_Store
+*.log
+*.tmp
+*.partial.mp4
+
+# Rust / Tauri build products
+src-tauri/target/
+
+# Python-generated files and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+pyannote-venv/
+
+# Experimental 3.5 engine; it is not part of the stable 3.4.1 package
+engine/mixed_whisper.py
+
+# Local models, credentials and machine-specific configuration
+models/
+*.bin
+*.safetensors
+hf_token
+transcription_language
+.env
+.env.*
+
+# User projects and generated media must never enter the repository
+projects/
+cache/
+releases/
+*.mp4
+*.mov
+*.mkv
+*.wav
