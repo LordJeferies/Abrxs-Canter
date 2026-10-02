@@ -31,7 +31,9 @@ function setStatus(kind, label) { const el = $('appStatus'); el.className = `sta
 function projectSettings() { return { mode: state.mode, editorial: state.editorial, video: state.video, transcript: state.transcript, brand: state.brand, structure: state.structure, exportMode: $('exportMode').value, exportXrolls: $('xrollToggle').checked }; }
 async function persistProject(lastOutput = null) {
   if (!state.project) return;
-  state.project = await invoke('update_project', { id: state.project.id, lastOutput, settings: projectSettings() });
+  const id = state.project.id;
+  const updated = await invoke('update_project', { id, lastOutput, settings: projectSettings() });
+  if (state.project?.id === id) state.project = updated;
 }
 
 async function loadProjects() {
@@ -67,6 +69,12 @@ async function browseProject() {
   catch (error) { alert(String(error)); }
 }
 function resetProjectWorkspace() {
+  state.workspaceEpoch=(state.workspaceEpoch||0)+1;
+  clearTimeout(state.editorSaveTimer); state.editorSaveTimer=null;
+  state.selectionAnchor=null; state.selectionFocus=null; state.selectingWords=false;
+  state.editorActiveBlock=-1; state.editorPlaying=false; state.previewRangeEnd=null;
+  state.timelineDrag=null; state.searchHits=[]; state.searchHitIndex=-1;
+  $('wordSearch').value=''; $('transcriptWords').innerHTML='';
   state.pieces=[]; state.totalPieces=0; state.outputResult=null; state.selectedVideo=null; state.reviews={videos:{}};
   state.editorOutput=null; state.editorData=null; state.editorBlocks=[]; state.selectedBlock=-1; state.editorHistory=[]; state.editorFuture=[];
   $('pieceList').innerHTML=''; $('pieceCount').textContent='0'; $('inventorySummary').classList.add('hidden'); $('inventorySummary').innerHTML=''; $('inventoryEmpty').classList.remove('hidden'); $('editorialRecovery').classList.add('hidden');
@@ -76,16 +84,20 @@ function resetProjectWorkspace() {
 }
 async function openProject(project) {
   resetProjectWorkspace();
+  const epoch=state.workspaceEpoch;
   state.project = project; state.output = project.path; state.outputResult = project.lastOutput || null;
   $('welcomeView').classList.add('hidden'); $('studioView').classList.remove('hidden');
   $('activeProjectName').textContent = project.name; $('activeProjectPath').textContent = project.path; $('activeProjectPath').title = project.path;
   const settings = project.settings || {};
+  $('exportMode').value='assembled'; $('xrollToggle').checked=true;
   for (const key of Object.keys(refs)) setPath(key, settings[key] || null, false);
   setMode(settings.mode === 'cut' ? 'cut' : 'prepare', false);
   if (settings.exportMode) $('exportMode').value = settings.exportMode;
   if (typeof settings.exportXrolls === 'boolean') $('xrollToggle').checked = settings.exportXrolls;
   if (state.editorial && state.mode === 'cut') await inspectEditorial();
-  if (project.lastOutput) { await loadReviewLibrary(project.lastOutput); await loadManualEditor(project.lastOutput); }
+  if(epoch!==state.workspaceEpoch)return;
+  if (project.lastOutput) { await loadReviewLibrary(project.lastOutput); if(epoch!==state.workspaceEpoch)return; await loadManualEditor(project.lastOutput); }
+  if(epoch!==state.workspaceEpoch)return;
   $('projectNameInput').value=''; $('createProjectBtn').disabled=true;
   setStatus('idle','Proyecto abierto'); updateStartState(); window.scrollTo({ top:0, behavior:'smooth' });
 }
@@ -112,17 +124,22 @@ function setMode(mode, persist = true) {
 async function choose(key, options) { const selected = await open(options); if (!selected) return; if(key==='editorial'){state.pieces=[];updateStartState();} setPath(key, selected); if (key === 'editorial') await inspectEditorial(); }
 
 async function inspectEditorial() {
+  const epoch=state.workspaceEpoch,editorial=state.editorial;
   $('inventoryEmpty').classList.add('hidden'); $('editorialRecovery').classList.add('hidden'); $('inventorySummary').classList.remove('hidden'); $('inventorySummary').innerHTML = '<span>Analizando estructura editorial…</span>'; $('pieceList').innerHTML = '';
-  try { const data = await invoke('inspect_editorial', { editorial:state.editorial }); state.pieces = data.pieces || []; state.totalPieces = state.pieces.length; $('pieceCount').textContent = state.pieces.length; $('inventorySummary').innerHTML = `<span><b>${data.actionable}</b> videos</span><span><b>${data.omitted}</b> omitidos</span>`; $('editorialRecovery').classList.toggle('hidden',data.actionable>0); renderPieces(); updateStartState(); }
-  catch (error) { state.pieces=[]; $('pieceCount').textContent='0'; $('inventorySummary').innerHTML = `<span class="error-copy">No se pudo leer: ${escapeHtml(String(error))}</span>`; $('editorialRecovery').classList.remove('hidden'); updateStartState(); }
+  try { const data = await invoke('inspect_editorial', { editorial }); if(epoch!==state.workspaceEpoch||editorial!==state.editorial)return; state.pieces = data.pieces || []; state.totalPieces = state.pieces.length; $('pieceCount').textContent = state.pieces.length; $('inventorySummary').innerHTML = `<span><b>${data.actionable}</b> videos</span><span><b>${data.omitted}</b> omitidos</span>`; $('editorialRecovery').classList.toggle('hidden',data.actionable>0); renderPieces(); updateStartState(); }
+  catch (error) { if(epoch!==state.workspaceEpoch||editorial!==state.editorial)return; state.pieces=[]; $('pieceCount').textContent='0'; $('inventorySummary').innerHTML = `<span class="error-copy">No se pudo leer: ${escapeHtml(String(error))}</span>`; $('editorialRecovery').classList.remove('hidden'); updateStartState(); }
 }
 function renderPieces() { $('pieceList').innerHTML = state.pieces.map((p,i) => `<div class="piece-item" data-piece="${escapeHtml(p.id)}"><div class="piece-num">${String(i+1).padStart(2,'0')}</div><div class="piece-info"><strong>${escapeHtml(p.id)} · ${escapeHtml(p.title)}</strong><span>${escapeHtml(p.kind)} · ${p.segments} secciones</span></div><div class="piece-meta">${p.xrolls} XR<br>${p.voiceovers} VO</div></div>`).join(''); }
 async function createEditorialTemplate(){if(!state.project)return;try{const path=await invoke('create_editorial_template',{projectPath:state.project.path});await invoke('reveal_path',{path});setStatus('success','Plantilla creada');}catch(error){alert(String(error));}}
 
 function statusLabel(status) { return ({approved:'Aprobado',changes:'Corregir',rejected:'Descartado',pending:'Pendiente'})[status] || 'Pendiente'; }
 async function loadReviewLibrary(outputPath, selectPath = null) {
+  const epoch=state.workspaceEpoch,projectPath=state.project.path;
   const videos = await invoke('list_project_videos', { path:outputPath });
-  state.reviews = await invoke('load_reviews', { projectPath:state.project.path });
+  if(epoch!==state.workspaceEpoch)return;
+  const reviews = await invoke('load_reviews', { projectPath });
+  if(epoch!==state.workspaceEpoch)return;
+  state.reviews=reviews;
   if (!videos.length) { $('reviewPanel').classList.add('hidden'); return; }
   $('reviewPanel').classList.remove('hidden'); $('reviewCount').textContent = videos.length;
   $('reviewList').innerHTML = videos.map(path => { const review = state.reviews.videos?.[path] || {}; const status = review.status || 'pending'; return `<button class="review-item status-${status}" type="button" data-path="${escapeHtml(path)}"><i>▶</i><span><strong>${escapeHtml(basename(path))}</strong><small>${statusLabel(status)}</small></span></button>`; }).join('');
@@ -132,7 +149,7 @@ async function loadReviewLibrary(outputPath, selectPath = null) {
 function selectReviewVideo(path) {
   state.selectedVideo = path; const review = state.reviews.videos?.[path] || {}; state.reviewStatus = review.status || 'pending';
   document.querySelectorAll('.review-item').forEach(item => item.classList.toggle('active', item.dataset.path === path));
-  $('reviewPlayer').src = convertFileSrc(path); $('reviewTitle').textContent = basename(path); $('reviewNote').value = review.note || ''; $('reviewControls').classList.remove('hidden'); $('trimStart').value = '0.000'; $('trimEnd').value = '';
+  if(window.AbrxsMedia)window.AbrxsMedia.attach($('reviewPlayer'),path).catch(e=>setStatus('error',String(e)));else $('reviewPlayer').src = convertFileSrc(path); $('reviewTitle').textContent = basename(path); $('reviewNote').value = review.note || ''; $('reviewControls').classList.remove('hidden'); $('trimStart').value = '0.000'; $('trimEnd').value = '';
   document.querySelectorAll('.review-status button').forEach(button => button.classList.toggle('active', button.dataset.status === state.reviewStatus));
 }
 async function saveCurrentReview() {
@@ -154,10 +171,12 @@ function preciseTime(seconds) {
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${s}`;
 }
 async function loadManualEditor(outputPath) {
+  const epoch=state.workspaceEpoch;
   try {
     await invoke('load_editor_data', { outputPath });
+    if(epoch!==state.workspaceEpoch)return;
     state.editorOutput = outputPath; $('manualPanel').classList.remove('hidden');
-  } catch (_) { $('manualPanel').classList.add('hidden'); }
+  } catch (_) { if(epoch===state.workspaceEpoch)$('manualPanel').classList.add('hidden'); }
 }
 
 const editorWords = () => state.editorData?.words || [];
@@ -208,7 +227,7 @@ async function openTimelineEditor() {
       $('editorTitle').value = draft.title || 'Nuevo clip';
     } else $('editorTitle').value = 'Nuevo clip';
     $('editorView').classList.remove('hidden'); document.body.style.overflow='hidden';
-    const video=$('editorVideo'); video.src=convertFileSrc(state.editorData.video); video.playbackRate=Number($('playbackRate').value);
+    const video=$('editorVideo'); if(window.AbrxsMedia)await window.AbrxsMedia.attach(video,state.editorData.video);else video.src=convertFileSrc(state.editorData.video); video.playbackRate=Number($('playbackRate').value);
     $('sourceBadge').textContent=basename(state.editorData.video).toLocaleUpperCase();
     renderTranscriptWords(); renderSuggestedPhrases(); renderEditorAssembly(); updateHistoryButtons();
     setStatus('idle','Editor abierto');
@@ -399,8 +418,9 @@ function handleProgress(data) {
   }
 }
 async function startJob() {
-  state.running=true; state.startedAt=Date.now(); state.outputResult=null; $('startBtn').disabled=true; $('progressPanel').classList.remove('hidden'); $('openOutputBtn').classList.add('hidden'); $('cancelBtn').classList.remove('hidden'); $('logOutput').textContent=''; setStatus('running','Procesando'); $('progressPanel').scrollIntoView({behavior:'smooth',block:'start'}); state.timer=setInterval(updateClock,1000); updateClock(); await persistProject();
-  try { await invoke('start_job',{config:{editorial:state.editorial,video:state.video,transcript:state.transcript,output:state.output,brand:state.brand,structure:state.structure,mode:state.mode,export_mode:$('exportMode').value,export_xrolls:$('xrollToggle').checked}}); }
+  if(state.running||!state.project||!state.video)return;
+  state.running=true; state.startedAt=Date.now(); state.outputResult=null; $('startBtn').disabled=true; $('progressPanel').classList.remove('hidden'); $('openOutputBtn').classList.add('hidden'); $('cancelBtn').classList.remove('hidden'); $('logOutput').textContent=''; setStatus('running','Procesando'); $('progressPanel').scrollIntoView({behavior:'smooth',block:'start'}); state.timer=setInterval(updateClock,1000); updateClock();
+  try { await persistProject();await invoke('start_job',{config:{editorial:state.editorial,video:state.video,transcript:state.transcript,output:state.output,brand:state.brand,structure:state.structure,mode:state.mode,export_mode:$('exportMode').value,export_xrolls:$('xrollToggle').checked}}); }
   catch(error) { finishJob(false,String(error)); }
 }
 function finishJob(success,message='') { state.running=false; clearInterval(state.timer); updateStartState(); $('cancelBtn').classList.add('hidden'); setStatus(success?'success':'error',success?'Terminado':'Error'); if(!success){$('progressTitle').textContent='El proceso se detuvo';$('progressDetail').textContent=message||'Revisa el registro';} }

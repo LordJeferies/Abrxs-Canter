@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const C=require('../review-web/core.js');
+assert.equal(C.seconds('01:02:03.456'),3723.456);
+assert.equal(C.stamp(3723.456),'01:02:03.456');
+assert.throws(()=>C.seconds('-5'));assert.throws(()=>C.seconds('00:60:00'));
+const t=C.transcript(JSON.stringify({words:[{start:10,end:10.4,word:'Hola'},{start:10.4,end:11,word:'mundo'}]}));
+assert.equal(t.granularity,'palabra');assert.equal(t.units.length,2);
+assert.equal(C.transcript('1\n00:00:10,000 --> 00:00:11,000\nHola mundo\n\n2\n00:00:12,000 --> 00:00:14,000\nOtra frase').units.length,2);
+assert.equal(C.transcript('[00:00:10.000 --> 00:00:15.000] Una frase.\n[00:00:17.000 --> 00:00:19.000] Otra frase.').units.length,2);
+assert.equal(C.transcript('WEBVTT\n\n00:10.000 --> 00:15.000\nTexto').units[0].start,10);
+assert.throws(()=>C.transcript('Texto sin tiempos'));
+assert.throws(()=>C.transcript('{"words":[{"start":12,"end":10,"word":"Mal"}]}'));
+assert.throws(()=>C.transcript('{"words":[{"start":12,"end":13,"word":"Uno"},{"start":10,"end":11,"word":"Dos"}]}'));
+const p={format:'abrxs-review-project-v1',name:'Prueba',source:'master.mp4',units:t.units,notes:[],clips:[{id:'uno',title:'Clip',blocks:[{start:10,end:11,text:'Hola mundo',role:'HOOK'}]}]};
+assert.equal(C.validateProject(JSON.parse(JSON.stringify(p))).clips[0].blocks[0].start,10);
+assert.equal(C.editorial(p).clips[0].segments[0].order,1);
+assert.throws(()=>C.editorial({...p,clips:[]}));
+console.log('Review: timestamps, TXT/SRT/VTT/JSON, validation and editorial OK.');

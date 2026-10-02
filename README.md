@@ -1,5 +1,18 @@
 # Abrxs-Canter
 
+## Estudio 3.8 · actualización local pendiente de instalación
+
+Cola de procesos, importación de fichas sin exportar por defecto, reutilización de exportaciones idénticas, límites alineados con palabras y reproducción local mediante rangos de archivo. La selección de palabras desplaza el visor y el cabezal; el cabezal resalta la palabra actual también al buscar con el video pausado. Consulta [ESTUDIO_3.8.md](ESTUDIO_3.8.md) y [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Las secciones anteriores son historial, no certificación de funcionamiento de la app instalada.
+
+## UX 3.6 — interfaz nueva, versión de prueba independiente
+
+Biblioteca y navegación persistente Preparar / Crear / Revisar, vista previa de la fuente, paneles redimensionables y mapa con pan/zoom. Producto separado Abrxs-Canter-UX. Consulta [UX_3.6.md](UX_3.6.md). Las apps anteriores se conservan. Pendiente de prueba visual y audiovisual manual; las pruebas de DOM no sustituyen esa revisión.
+
+Nueva navegación editorial, mapa de resultados, bandeja de fragmentos,
+transcripción sincronizada, evidencia visual y contexto exportable.
+Consulta [ESTUDIO_3.5.md](ESTUDIO_3.5.md) para uso, construcción y limitaciones.
+La base 3.4.1 y las etapas 1/2 se conservan como referencia histórica.
+
 Abrxs-Canter es una aplicación local para macOS que convierte videos largos en clips verificables mediante transcripción por palabra, alineación textual y edición no destructiva.
 
 La versión `3.4.1` consolida la versión 3.4 utilizada en producción. Integra en el código fuente la corrección de reconstrucción de palabras y puntuación que antes estaba aplicada directamente sobre la aplicación instalada.
@@ -82,7 +95,7 @@ El repositorio excluye deliberadamente:
 
 ## Estado de la versión
 
-Esta rama corresponde a la línea funcional 3.4. La versión experimental 3.5 con procesamiento mixto por bloques no forma parte de este paquete estable.
+Esta copia incluye las etapas editoriales y UX 3.6. Es una versión de prueba independiente; no debe presentarse como estable hasta completar la revisión manual audiovisual. La línea publicada anteriormente puede diferir de esta copia local.
 
 ## Firma y distribución
 

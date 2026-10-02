@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "abrxs-Canter",
-  "version": "3.4.1",
-  "identifier": "com.abrxs.canter",
+  "productName": "Abrxs-Canter-UX",
+  "version": "3.8.1",
+  "identifier": "com.abrxs.canter.ux",
   "build": {
     "frontendDist": "../dist"
   },
@@ -10,7 +10,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Abrxs-Canter 3.4.1",
+        "title": "Abrxs-Canter · Estudio 3.8.1",
         "width": 1280,
         "height": 900,
         "minWidth": 900,
@@ -26,7 +26,8 @@
       "assetProtocol": {
         "enable": true,
         "scope": [
-          "**"
+          "**",
+          "**/.abrxs-cache-stage1/**"
         ]
       }
     }
@@ -34,15 +35,18 @@
   "bundle": {
     "active": true,
     "targets": [
-      "app",
-      "dmg"
+      "app"
     ],
     "category": "Video",
     "shortDescription": "Estudio local de clips",
     "longDescription": "Transcribe, diseña, alinea, corta y revisa clips con evidencia por palabra.",
     "resources": {
       "../engine/abraxas_local.py": "engine/abraxas_local.py",
-      "../engine/transcript_quality.py": "engine/transcript_quality.py"
+      "../engine/transcript_quality.py": "engine/transcript_quality.py",
+      "../engine/stage1.py": "engine/stage1.py",
+      "../engine/stage2.py": "engine/stage2.py",
+      "../engine/stage3.py": "engine/stage3.py",
+      "../engine/native/abrxs-vision": "engine/native/abrxs-vision"
     },
     "macOS": {
       "minimumSystemVersion": "12.0"

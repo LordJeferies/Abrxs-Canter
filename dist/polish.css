@@ -1,0 +1,15 @@
+/* Refined reference surfaces, not a replacement of editor behavior. */
+.ux-app{background:linear-gradient(140deg,#fafbfc,#eef0f3);--ac-line:#dfe2e7}
+.ux-app .ux-sidebar{background:linear-gradient(170deg,#fafbfc,#e9ecf0);border-right-color:#dce0e6}
+.ux-app .panel,.ux-app .project-card{background:linear-gradient(145deg,#fff,#f6f7f9);border:1px solid #fff;box-shadow:inset 0 0 0 1px #dce0e580,0 3px 12px #00000004;border-radius:20px}
+.ux-app .project-card{padding:18px;transition:border-color .15s ease}
+.ux-app .project-card:hover{box-shadow:inset 0 0 0 1px #aeb9ca,0 4px 16px #00000008}
+.ux-app .ac-card{border-radius:18px;background:linear-gradient(145deg,#fff,#f0f2f6);border-color:#dde2e9}
+.ux-app .ac-card img{border-radius:12px}
+.ux-app .ac-map-node{border-radius:20px;box-shadow:0 4px 18px #00000009;border-color:#d5dce5}
+.ux-app .ac-node-grip{border-radius:20px 20px 0 0;background:#f5f7fa}
+.ux-app .ac-map-viewport{background-color:#f5f7fa;background-image:radial-gradient(#c4cbd5 1px,transparent 1px);background-size:20px 20px}
+.ux-app .ac-editor,.ux-app .ac-preview{border-radius:18px}
+.ux-app .ac-toolbar button,.ux-app .secondary-btn{border-radius:10px}
+.ux-app button:focus-visible,.ux-app input:focus-visible{outline:2px solid #7ba7e4;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.ux-app *{transition:none!important}}

@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "references": {"library": "Tarjetas claras y paneles de referencias 3 y 5", "editor": "Reproductor grafito y timeline de referencias 1, 8, 10 y 11", "map": "Nodos conectados y trama de puntos de referencia 2", "dashboard": "Modularidad de referencias 6 y 7, sin métricas decorativas"},
+  "colors": {"background":"#eceef1","surface":"#ffffff","text":"#17191b","muted":"#6b7079","editor":"#16181b","selection":"#4787f2","accent":"#ed642f"},
+  "shapes": {"panelRadius":22,"playerRadius":24,"cardRadius":16,"controlRadius":12,"borderWidth":1,"minimumTouchTarget":44},
+  "textures": {"surface":"Degradado blanco a gris muy tenue, sin raster", "border":"Borde exterior blanco y línea interior gris semitransparente", "shadow":"Difusa y de poca opacidad; no todos los controles flotan", "map":"Puntos de 1 px separados 20 px mediante radial-gradient"},
+  "rules": ["Color para selección o estado, no para decorar todo", "Texto principal de sistema, tiempo monoespaciado", "Controles reales, no imágenes de UI", "Una reproducción activa", "Duración real de bloques; no ondas de audio ficticias", "Sin animación continua ni dependencia de IA para dibujar la interfaz"]
+}

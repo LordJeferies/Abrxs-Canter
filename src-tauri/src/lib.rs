@@ -2,13 +2,16 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{
     fs,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::Mutex,
     time::{SystemTime, UNIX_EPOCH},
 };
 use tauri::{AppHandle, Emitter, Manager, State};
+mod media;
+use media::{MediaState,media_source};
+use std::os::unix::process::CommandExt;
 
 #[derive(Default)]
 struct JobState {
@@ -66,7 +69,22 @@ fn registry_path(app: &AppHandle) -> Result<PathBuf, String> {
 
 fn load_registry(app: &AppHandle) -> Result<Vec<ProjectRecord>, String> {
     let path = registry_path(app)?;
-    if !path.exists() { return Ok(Vec::new()); }
+    if !path.exists() {
+        // Importar únicamente el índice; conservar las bibliotecas anteriores.
+        let previous = path.parent().and_then(Path::parent).and_then(|parent| {
+            ["com.abrxs.canter.estudio", "com.abrxs.canter.etapa2", "com.abrxs.canter"]
+                .iter().map(|id| parent.join(id).join("projects.json"))
+                .find(|candidate| candidate.is_file() && *candidate != path)
+        });
+        if let Some(previous) = previous {
+            let raw = fs::read_to_string(previous).map_err(|e| e.to_string())?;
+            let projects: Vec<ProjectRecord> = serde_json::from_str(&raw)
+                .map_err(|e| format!("No se pudo importar la biblioteca anterior: {e}"))?;
+            save_registry(app, &projects)?;
+            return Ok(projects);
+        }
+        return Ok(Vec::new());
+    }
     let raw = fs::read_to_string(path).map_err(|e| e.to_string())?;
     serde_json::from_str(&raw).map_err(|e| format!("La biblioteca de proyectos está dañada: {e}"))
 }
@@ -382,6 +400,98 @@ fn python_path() -> String {
 
 const APP_PATH: &str = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
 
+fn stage1_path(app: &AppHandle) -> Result<PathBuf, String> {
+    let bundled = app.path().resource_dir().map_err(|e| e.to_string())?.join("engine/stage1.py");
+    if bundled.is_file() { return Ok(bundled); }
+    let local = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../engine/stage1.py");
+    if local.is_file() { return Ok(local); }
+    Err("No se encontró el módulo del editor actualizado.".into())
+}
+
+#[tauri::command]
+async fn stage1_query(app: AppHandle, request: Value) -> Result<Value, String> {
+    let path = stage1_path(&app)?;
+    // Las operaciones largas tienen un comando separado y son cancelables.
+    let operation = request.get("op").and_then(Value::as_str).unwrap_or("");
+    if !["library", "library_snapshot", "source", "save", "draft", "frame", "clear_cache", "relink", "caption_style", "studio_load", "studio_save", "studio_visual"].contains(&operation) {
+        return Err("Operación no permitida en consulta rápida.".into());
+    }
+    if ["library", "save", "draft", "clear_cache", "relink", "studio_save"].contains(&operation) {
+        if app.state::<JobState>().pid.lock().map_err(|_| "Estado bloqueado")?.is_some() {
+            return Err("Espera a que termine o cancela el trabajo antes de modificar el proyecto.".into());
+        }
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut child = Command::new(python_path()).env("PATH", APP_PATH).env("PYTHONDONTWRITEBYTECODE", "1").arg(path)
+            .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped())
+            .spawn().map_err(|e| e.to_string())?;
+        child.stdin.take().ok_or("No se pudo abrir la consulta")?
+            .write_all(request.to_string().as_bytes()).map_err(|e| e.to_string())?;
+        let output = child.wait_with_output().map_err(|e| e.to_string())?;
+        if !output.status.success() { return Err(String::from_utf8_lossy(&output.stderr).to_string()); }
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let result = stdout.lines().rev().find_map(|line| line.strip_prefix("ABRXS_STAGE1_RESULT:"))
+            .ok_or("El módulo no devolvió un resultado válido")?;
+        serde_json::from_str(result).map_err(|e| e.to_string())
+    }).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+fn start_stage1_job(app: AppHandle, state: State<JobState>, request: Value) -> Result<(), String> {
+    let operation = request.get("op").and_then(Value::as_str).unwrap_or("");
+    if !["export", "import", "assets", "visual", "studio_context", "studio_suggest"].contains(&operation) {
+        return Err("Trabajo no permitido.".into());
+    }
+    let request_id = request.get("requestId").and_then(Value::as_str)
+        .ok_or("El trabajo debe tener identificador")?.to_string();
+    let mut guard = state.pid.lock().map_err(|_| "Estado bloqueado")?;
+    if guard.is_some() { return Err("Ya hay un trabajo en curso. Espera o cancélalo.".into()); }
+    let mut child = Command::new(python_path()).env("PATH", APP_PATH).env("PYTHONDONTWRITEBYTECODE", "1").arg(stage1_path(&app)?)
+        .process_group(0)
+        .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped())
+        .spawn().map_err(|e| e.to_string())?;
+    let write_result = child.stdin.take().ok_or("No se pudo abrir el trabajo")?
+        .write_all(request.to_string().as_bytes());
+    if let Err(error) = write_result { let _ = child.kill(); let _ = child.wait(); return Err(error.to_string()); }
+    *guard = Some(child.id());
+    drop(guard);
+    let stdout = child.stdout.take().ok_or("No se pudo leer la salida")?;
+    let stderr = child.stderr.take().ok_or("No se pudo leer el registro")?;
+    let out_app = app.clone();
+    let out_id = request_id.clone();
+    let reader = std::thread::spawn(move || {
+        for line in BufReader::new(stdout).lines().map_while(Result::ok) {
+            if let Some(raw) = line.strip_prefix("ABRXS_STAGE1_EVENT:") {
+                if let Ok(value) = serde_json::from_str::<Value>(raw) { let _ = out_app.emit("stage1-event", value); }
+            } else if let Some(raw) = line.strip_prefix("ABRXS_STAGE1_RESULT:") {
+                if let Ok(value) = serde_json::from_str::<Value>(raw) {
+                    let _ = out_app.emit("stage1-event", json!({"event":"result", "requestId":out_id, "data":value}));
+                }
+            }
+        }
+    });
+    let error_app = app.clone();
+    let errors = std::thread::spawn(move || {
+        let mut tail = String::new();
+        for line in BufReader::new(stderr).lines().map_while(Result::ok) {
+            let _ = error_app.emit("backend-line", &line);
+            tail.push_str(&line); tail.push('\n');
+            if tail.len() > 8000 { tail = tail.chars().rev().take(4000).collect::<String>().chars().rev().collect(); }
+        }
+        tail
+    });
+    std::thread::spawn(move || {
+        let status = child.wait();
+        let _ = reader.join();
+        let error = errors.join().unwrap_or_default();
+        if let Ok(mut guard) = app.state::<JobState>().pid.lock() { *guard = None; }
+        let success = status.as_ref().is_ok_and(|s| s.success());
+        let _ = app.emit("stage1-event", json!({"event":"finished", "requestId":request_id,
+            "success":success, "detail":if success {String::new()} else if error.is_empty() {"Trabajo cancelado o interrumpido.".into()} else {error}}));
+    });
+    Ok(())
+}
+
 fn ffmpeg_path() -> &'static str {
     if Path::new("/opt/homebrew/bin/ffmpeg").exists() { "/opt/homebrew/bin/ffmpeg" } else { "ffmpeg" }
 }
@@ -407,6 +517,7 @@ fn engine_path(app: &AppHandle) -> Result<PathBuf, String> {
 fn inspect_editorial(app: AppHandle, editorial: String) -> Result<Value, String> {
     let output = Command::new(python_path())
         .env("PATH", APP_PATH)
+        .env("PYTHONDONTWRITEBYTECODE", "1")
         .arg(engine_path(&app)?)
         .arg("--editorial")
         .arg(editorial)
@@ -428,6 +539,8 @@ fn start_job(app: AppHandle, state: State<JobState>, config: JobConfig) -> Resul
         return Err("Ya hay un proyecto en ejecución.".into());
     }
     let mut command = Command::new(python_path());
+    command.env("PYTHONDONTWRITEBYTECODE", "1");
+    command.env("PYTHONUNBUFFERED", "1");
     command
         .env("PATH", APP_PATH)
         .arg(engine_path(&app)?)
@@ -461,6 +574,7 @@ fn start_job(app: AppHandle, state: State<JobState>, config: JobConfig) -> Resul
     if !config.export_xrolls {
         command.arg("--no-xrolls");
     }
+    command.process_group(0);
     let mut child = command.spawn().map_err(|e| format!("No se pudo iniciar abrxs-Canter: {e}"))?;
     let pid = child.id();
     *pid_guard = Some(pid);
@@ -469,7 +583,7 @@ fn start_job(app: AppHandle, state: State<JobState>, config: JobConfig) -> Resul
     let stdout = child.stdout.take().ok_or("No se pudo leer la salida del motor")?;
     let stderr = child.stderr.take().ok_or("No se pudo leer el registro del motor")?;
     let stdout_app = app.clone();
-    std::thread::spawn(move || {
+    let output_reader = std::thread::spawn(move || {
         for line in BufReader::new(stdout).lines().map_while(Result::ok) {
             if let Some(raw) = line.strip_prefix("ABRXS_CANTER_EVENT:") {
                 if let Ok(payload) = serde_json::from_str::<Value>(raw) {
@@ -481,13 +595,19 @@ fn start_job(app: AppHandle, state: State<JobState>, config: JobConfig) -> Resul
         }
     });
     let stderr_app = app.clone();
-    std::thread::spawn(move || {
+    let error_reader = std::thread::spawn(move || {
+        let mut tail = String::new();
         for line in BufReader::new(stderr).lines().map_while(Result::ok) {
-            let _ = stderr_app.emit("backend-line", line);
+            let _ = stderr_app.emit("backend-line", &line);
+            tail.push_str(&line);tail.push('\n');
+            if tail.len()>16000 {tail=tail.chars().rev().take(8000).collect::<String>().chars().rev().collect();}
         }
+        tail
     });
     std::thread::spawn(move || {
         let result = child.wait();
+        let _ = output_reader.join();
+        let error = error_reader.join().unwrap_or_default();
         if let Some(job_state) = app.try_state::<JobState>() {
             if let Ok(mut guard) = job_state.pid.lock() {
                 *guard = None;
@@ -495,7 +615,7 @@ fn start_job(app: AppHandle, state: State<JobState>, config: JobConfig) -> Resul
         }
         let payload = match result {
             Ok(status) if status.success() => FinishedPayload { success: true, message: "Proyecto terminado".into() },
-            Ok(status) => FinishedPayload { success: false, message: format!("El motor terminó con código {}", status.code().unwrap_or(-1)) },
+            Ok(status) => FinishedPayload { success: false, message: format!("El motor terminó con código {}.\n{}", status.code().unwrap_or(-1), error.trim()) },
             Err(error) => FinishedPayload { success: false, message: error.to_string() },
         };
         let _ = app.emit("job-finished", payload);
@@ -504,11 +624,12 @@ fn start_job(app: AppHandle, state: State<JobState>, config: JobConfig) -> Resul
 }
 
 #[tauri::command]
-fn cancel_job(state: State<JobState>) -> Result<(), String> {
+fn cancel_job(app: AppHandle, state: State<JobState>) -> Result<(), String> {
     let pid = *state.pid.lock().map_err(|_| "Estado interno bloqueado")?;
     if let Some(pid) = pid {
-        let _ = Command::new("pkill").args(["-TERM", "-P", &pid.to_string()]).status();
-        let _ = Command::new("kill").args(["-TERM", &pid.to_string()]).status();
+        let result = Command::new("/bin/kill").args(["-TERM", "--", &format!("-{pid}")]).status().map_err(|e|e.to_string())?;
+        if !result.success(){return Err("El motor ya terminó o no pudo recibir la cancelación. Revisa Procesos.".into());}
+        std::thread::spawn(move||{std::thread::sleep(std::time::Duration::from_secs(4));if app.state::<JobState>().pid.lock().ok().is_some_and(|p|*p==Some(pid)){let _=Command::new("/bin/kill").args(["-KILL","--",&format!("-{pid}")]).status();}});
     }
     Ok(())
 }
@@ -516,6 +637,14 @@ fn cancel_job(state: State<JobState>) -> Result<(), String> {
 #[tauri::command]
 fn reveal_path(path: String) -> Result<(), String> {
     Command::new("open").arg(path).spawn().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn show_in_finder(path: String) -> Result<(), String> {
+    if !Path::new(&path).exists() { return Err("El archivo ya no está en esa ubicación.".into()); }
+    let result = Command::new("open").arg("-R").arg(path).status().map_err(|e| e.to_string())?;
+    if !result.success() { return Err("No se pudo mostrar el archivo en Finder.".into()); }
     Ok(())
 }
 
@@ -578,13 +707,16 @@ fn trim_video(source: String, start: f64, end: f64) -> Result<String, String> {
 pub fn run() {
     tauri::Builder::default()
         .manage(JobState::default())
+        .manage(MediaState::default())
+        .on_window_event(|window,event|{if matches!(event,tauri::WindowEvent::Destroyed){let _=cancel_job(window.app_handle().clone(),window.state::<JobState>());}})
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             list_projects, create_project, register_project, update_project, forget_project,
             load_reviews, save_review, load_compact_transcript, save_manual_editorial,
             load_editor_data, load_editor_draft, save_editor_draft, create_editorial_template,
-            inspect_editorial, start_job, cancel_job,
+            inspect_editorial, start_job, cancel_job, media_source,
+            stage1_query, start_stage1_job, show_in_finder,
             reveal_path, list_project_videos, trim_video
         ])
         .run(tauri::generate_context!())

@@ -21,6 +21,7 @@ import difflib
 import hashlib
 import html as html_lib
 import json
+import math
 import os
 import re
 import shutil
@@ -470,24 +471,56 @@ def parse_json_editorial_data(data: Any, source_format: str = "JSON") -> list[Pi
 
 
 def parse_editorial(path: Path) -> list[Piece]:
+    raw_text = path.read_text(encoding="utf-8-sig", errors="replace")
+    if re.search(r"(?im)^\s*PLANTILLA (?:PARA REPARAR|IA)|^\s*SUBE A LA IA\s*:", raw_text):
+        raise ValueError("Seleccionaste una plantilla de instrucciones, no los cortes. Sube esa plantilla y tu editorial a la IA e importa su respuesta como DECISIONES_ABRXS.txt o .json. No se cortará el clip de ejemplo.")
     if path.suffix.lower() == ".json":
-        return parse_json_editorial_data(json.loads(path.read_text(encoding="utf-8", errors="replace")))
+        return validate_editorial_pieces(parse_json_editorial_data(json.loads(raw_text)))
     if path.suffix.lower() in {".html", ".htm"}:
         pieces = parse_html_editorial(path)
         if pieces:
-            return pieces
+            return validate_editorial_pieces(pieces)
     if path.suffix.lower() in {".txt", ".md"}:
-        raw_text = path.read_text(encoding="utf-8", errors="replace")
-        json_match = re.search(r"```json\s*(.*?)```", raw_text, re.I | re.S)
-        candidate = json_match.group(1) if json_match else raw_text.strip()
-        if candidate.startswith(("{", "[")):
+        fenced = re.findall(r"```(?:json)?\s*(.*?)```", raw_text, re.I | re.S)
+        candidates = fenced or [raw_text.strip()]
+        for candidate in candidates:
+            candidate = candidate.strip()
+            if not candidate.startswith(("{", "[")):
+                # Una IA puede añadir una frase antes del objeto JSON.
+                match = re.search(r'\{\s*"(?:clips|pieces|videos)"\s*:', candidate)
+                if not match:
+                    continue
+                candidate = candidate[match.start():]
             try:
-                pieces = parse_json_editorial_data(json.loads(candidate), path.suffix.upper().lstrip("."))
-                if pieces:
-                    return pieces
-            except json.JSONDecodeError:
-                pass
-    return parse_text_editorial(path)
+                data, _ = json.JSONDecoder().raw_decode(candidate)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"JSON editorial inválido: línea {exc.lineno}, columna {exc.colno}. No se importaron cortes.") from exc
+            pieces = parse_json_editorial_data(data, path.suffix.upper().lstrip("."))
+            if pieces:
+                return validate_editorial_pieces(pieces)
+            raise ValueError("El JSON no contiene clips con segmentos. Usa la plantilla de reparación para convertirlo.")
+    return validate_editorial_pieces(parse_text_editorial(path))
+
+
+def validate_editorial_pieces(pieces: list[Piece]) -> list[Piece]:
+    ids = set()
+    for piece in pieces:
+        if piece.id in ids:
+            raise ValueError(f"ID de clip duplicado: {piece.id}. Asigna un ID diferente a cada clip.")
+        ids.add(piece.id)
+        orders = set()
+        segment_ids = set()
+        for segment in piece.segments:
+            if segment.order in orders or segment.id in segment_ids:
+                raise ValueError(f"{piece.id}: orden o ID de sección duplicado.")
+            orders.add(segment.order); segment_ids.add(segment.id)
+            if (segment.start is None) != (segment.end is None):
+                raise ValueError(f"{piece.id}/{segment.id}: falta Inicio o Final; aporta ambos o deja ambos en null con texto literal.")
+            if segment.start is not None and (not math.isfinite(segment.start) or not math.isfinite(segment.end) or segment.start < 0 or segment.end <= segment.start):
+                raise ValueError(f"{piece.id}/{segment.id}: intervalo inválido.")
+            if segment.start is None and not segment.text.strip():
+                raise ValueError(f"{piece.id}/{segment.id}: no hay timestamps ni texto literal para encontrar el corte.")
+    return pieces
 
 
 def collect_word_dicts(obj: Any, found: list[Word]) -> None:
@@ -633,7 +666,7 @@ def generate_transcript(video: Path, cache_dir: Path, model: Optional[str], back
             cpp_cli, "-m", str(model_value), "-f", str(audio), "-l", transcription_language(),
             "-sow", "-ojf", "-of", str(output_base), "-pp",
         ])
-    else:
+    elif selected != "mlx_whisper":
         raise RuntimeError(
             "No hay un motor word-level listo. Instala mlx-whisper o configura "
             "ABRAXAS_WHISPER_CPP_MODEL con la ruta a un modelo ggml de whisper.cpp."
@@ -705,6 +738,24 @@ def align_text(text: str, words: list[Word]) -> tuple[Optional[float], Optional[
     if len(query) < 3 or not corpus:
         return None, None, 0.0
 
+    # Linear exact search avoids thousands of fuzzy comparisons for long podcasts.
+    prefix = [0] * len(query)
+    matched = 0
+    for i in range(1, len(query)):
+        while matched and query[i] != query[matched]:
+            matched = prefix[matched-1]
+        if query[i] == query[matched]:
+            matched += 1
+        prefix[i] = matched
+    matched = 0
+    for i, token in enumerate(corpus):
+        while matched and token != query[matched]:
+            matched = prefix[matched-1]
+        if token == query[matched]:
+            matched += 1
+        if matched == len(query):
+            return words[corpus_pairs[i-len(query)+1][1]].start, words[corpus_pairs[i][1]].end, 1.0
+
     positions: dict[str, list[int]] = {}
     for pos, token in enumerate(corpus):
         positions.setdefault(token, []).append(pos)
@@ -732,7 +783,9 @@ def align_text(text: str, words: list[Word]) -> tuple[Optional[float], Optional[
             score = matcher.ratio()
             if score > best_score:
                 blocks = [b for b in matcher.get_matching_blocks() if b.size]
-                if blocks:
+                # A high average score does not prove the opening/closing words.
+                # Reject truncated matches instead of silently cutting a sentence short.
+                if blocks and blocks[0].a == 0 and blocks[-1].a + blocks[-1].size == len(query):
                     first = start + blocks[0].b
                     last = start + blocks[-1].b + blocks[-1].size - 1
                     best_score = score
@@ -750,7 +803,12 @@ def align_pieces(pieces: list[Piece], words: list[Word]) -> None:
             if not segment.text.strip():
                 segment.alignment_status = "NO_TEXT"
                 continue
-            start, end, score = align_text(segment.text, words)
+            nearby = [w for w in words if segment.start is not None and
+                      w.end >= max(0, segment.start - 60) and
+                      w.start <= (segment.end if segment.end is not None else segment.start + 600) + 60]
+            start, end, score = align_text(segment.text, nearby or words)
+            if nearby and (start is None or score < MIN_ALIGNMENT_SCORE):
+                start, end, score = align_text(segment.text, words)
             segment.alignment_score = score
             if start is None or end is None or score < MIN_ALIGNMENT_SCORE:
                 segment.alignment_status = "REVIEW_REQUIRED"

@@ -1,0 +1,16 @@
+{
+  "clips": [
+    {
+      "id": "EJEMPLO_01",
+      "title": "Ejemplo: sustituye los tiempos por los de tu máster",
+      "type": "video",
+      "selected": true,
+      "segments": [
+        {"id": "EJEMPLO_01_S01", "order": 1, "role": "HOOK", "start": "00:00:10.000", "end": "00:00:15.000", "text": ""},
+        {"id": "EJEMPLO_01_S02", "order": 2, "role": "DESARROLLO", "start": "00:00:02.000", "end": "00:00:08.000", "text": ""}
+      ],
+      "voiceovers": [],
+      "xrolls": []
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "font": "Arial",
+  "size": 48,
+  "color": "#FFFFFF",
+  "background": "#000000",
+  "position": "bottom",
+  "bold": true,
+  "box": false,
+  "words": 6,
+  "margin": 80,
+  "outline": 2
+}

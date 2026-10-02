@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#151719"><meta name="apple-mobile-web-app-capable" content="yes"><title>Abrxs · Review 05</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="stylesheet" href="style.css?v=5"></head>
+<body>
+<header><a class="brand" href="./"><span>✳</span> ABRXS <small>REVIEW / 05</small></a><button id="backup">Guardar proyecto</button><button id="log-toggle" aria-expanded="false">Actividad</button></header>
+<main>
+<aside class="library panel">
+  <h2>Biblioteca <span class="dot"></span></h2>
+  <details class="library-config"><summary>Proyecto y conexión a Drive</summary>
+  <div class="eyebrow">ESPACIO DE TRABAJO</div><label>Proyecto<input id="project-name" maxlength="100" placeholder="Nombre del proyecto"></label>
+  <div class="row"><button id="new-project">Nuevo</button><label class="button">Abrir copia<input type="file" id="import-project" accept=".json" hidden></label></div>
+  <details id="drive-settings"><summary>Configurar conexión a Drive</summary><p>El permiso permite leer archivos de tu Drive, no solo esta carpeta. No permite modificarlos. Necesitas un ID OAuth web de Google. <a href="README.md">Ver instrucciones</a>.</p><label>ID público de cliente<input id="client-id" placeholder="…apps.googleusercontent.com" autocomplete="off"></label><button id="load-google">Preparar inicio de sesión</button></details>
+  <div class="row"><button id="connect" disabled>Iniciar sesión en Drive</button><button id="disconnect" disabled>Salir</button></div>
+  <label>Carpeta de Drive<input id="folder" placeholder="Enlace de carpeta o ID"></label><div class="row"><button id="browse">Abrir carpeta</button><button id="root">Mi Drive</button></div>
+  <label class="button">＋ Video del dispositivo<input id="local-video" type="file" accept="video/*" hidden></label>
+  </details>
+  <div class="browser-tools"><div id="breadcrumbs" class="breadcrumbs">Mi Drive</div><div class="row"><button id="folder-back" disabled>← Atrás</button><button id="folder-refresh">↻ Actualizar</button></div><input id="file-search" type="search" placeholder="Buscar en esta carpeta" aria-label="Buscar videos y carpetas"><span id="file-count" class="muted"></span></div>
+  <div id="files" class="files"><p class="muted">Conecta Drive o abre un video local. No se publican tus archivos.</p></div>
+</aside>
+<section class="workspace">
+  <div class="heading"><div><div class="eyebrow">REVISAR → SELECCIONAR → ENTREGAR</div><h1 id="video-title">Tu siguiente montaje</h1></div><span id="saved" class="badge">Local</span></div>
+  <section class="player-panel"><div class="viewer-modes"><button id="drive-online" hidden>Visor de Drive · online</button><button id="drive-precision" hidden>Reproductor con tiempos</button><a id="open-drive" hidden target="_blank" rel="noopener noreferrer">Abrir en Drive ↗</a></div><div id="viewer-empty"><span>▷</span><strong>Elige un video de tu biblioteca</strong><p>Abre una carpeta de Drive o un archivo del dispositivo.<br>Revisa aquí; guarda tus decisiones sin renderizar.</p></div><iframe id="drive-player" hidden title="Video online de Google Drive" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><video id="player" controls playsinline preload="metadata"></video><div class="transport"><span id="clock">00:00:00.000</span><button id="range-play">Ver selección</button><button id="full-play">Ver completo</button><button id="download-video" hidden>Cargar clip completo</button></div><p id="player-help">Selecciona un video. Las notas usan el tiempo de este archivo; las fichas usan el tiempo del máster de la transcripción.</p></section>
+  <nav class="tabs" aria-label="Herramientas"><button data-tab="notes" class="active">Revisión</button><button data-tab="edit">Crear clips</button><button data-tab="map">Mapa de entrega</button></nav>
+  <section id="notes" class="panel tab">
+    <div class="section-head"><h2>Notas con tiempos manuales</h2><button id="mark-now">Editar tiempos manuales</button></div>
+    <div class="time-row"><label>Desde<input id="note-start" value="00:00:00.000"></label><label>Hasta<input id="note-end" value="00:00:00.000"></label><label>Indicación<select id="note-kind"><option value="comment">Comentario</option><option value="trim-in">Empezar aquí</option><option value="trim-out">Terminar aquí</option><option value="remove">Quitar intervalo</option></select></label></div>
+    <label>Corrección<textarea id="note-text" placeholder="Qué cambiar y por qué…"></textarea></label><button id="add-note" class="primary">Guardar nota</button><div id="note-list"></div>
+    <div class="row"><button id="notes-txt">Exportar notas TXT</button><button id="notes-json">Exportar notas JSON</button></div>
+  </section>
+  <section id="edit" class="panel tab" hidden>
+    <div class="section-head"><h2>Texto → bloques → clip</h2><label class="button">Cargar transcripción<input id="transcript" type="file" accept=".json,.srt,.vtt,.txt" hidden></label></div>
+    <label>Nombre exacto del máster<input id="master-name" placeholder="Nombre del video original de esta transcripción"></label>
+    <p id="selection-help">Toca el inicio y luego el final del texto. No se inventan tiempos palabra por palabra.</p><div class="row"><button id="words-prev">← Texto anterior</button><span id="words-page" class="badge"></span><button id="words-next">Texto siguiente →</button></div><div id="words" class="words"></div>
+    <div class="row"><button id="clear-selection">Limpiar selección</button><button id="preview-text">Escuchar selección</button><button id="add-block" class="primary">＋ Añadir bloque</button></div>
+    <div class="section-head"><h2>Fichas del proyecto</h2><button id="new-clip">＋ Nueva ficha</button></div><div class="row"><select id="clip-select" aria-label="Ficha activa"></select><input id="clip-title" aria-label="Nombre de ficha" placeholder="Nombre del clip"><button id="delete-clip">Eliminar ficha</button></div>
+    <div id="timeline" class="timeline"></div><div id="blocks"></div>
+    <div class="row"><button id="editorial-txt">Cortes TXT para Mac</button><button id="editorial-json">Cortes JSON para Mac</button></div>
+  </section>
+  <section id="map" class="panel tab graph" hidden><div class="section-head"><h2>Mapa de entrega</h2><span class="badge">Fuente · cortes · texto</span></div><div id="nodes"></div><p>Las conexiones muestran la procedencia. Este mapa no transcribe ni renderiza videos.</p></section>
+</section>
+</main><div id="notice" role="status" aria-live="polite">Listo · Los borradores se guardan en este navegador. Descarga una copia para conservarlos.</div>
+<section id="activity" hidden><div class="section-head"><h2>Actividad</h2><button id="copy-log">Copiar diagnóstico</button><button id="close-log">Cerrar</button></div><pre id="log"></pre></section>
+<script src="core.js?v=5"></script><script src="drive.js?v=5"></script><script src="app.js?v=5"></script><script src="studio.js?v=5"></script>
+</body></html>

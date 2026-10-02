@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Abrxs-Canter 3.4.1</title>
+  <title>Abrxs-Canter · UX 3.6.1</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="stage1.css" />
+  <link rel="stylesheet" href="studio.css" />
+  <link rel="stylesheet" href="ux.css" />
+  <link rel="stylesheet" href="polish.css" />
+  <link rel="stylesheet" href="hotfix.css" />
+  <link rel="stylesheet" href="review-dock.css" />
 </head>
 <body>
   <div class="noise"></div>
@@ -12,7 +18,7 @@
     <header class="topbar">
       <button id="brandHome" class="brand brand-button" type="button">
         <div class="mark">AC</div>
-        <div><h1>ABRXS-CANTER</h1><p>Editor local · 3.4.1</p></div>
+        <div><h1>ABRXS-CANTER</h1><p>Estudio editorial · UX 3.6.1</p></div>
       </button>
       <div id="appStatus" class="status idle"><i></i><span>Listo</span></div>
     </header>
@@ -86,13 +92,13 @@
       </section>
     </section>
 
-    <footer><span>Abrxs-Canter · v3.4.1</span><span>Los archivos permanecen en tu Mac</span></footer>
+    <footer><span>Abrxs-Canter · UX 3.6.1</span><span>Los archivos permanecen en tu Mac</span></footer>
   </main>
 
   <section id="editorView" class="editor-view hidden" aria-label="Editor de clips">
     <header class="editor-topbar">
       <button id="closeEditorBtn" class="editor-back" type="button">← Proyecto</button>
-      <div class="editor-title-wrap"><small>ABRXS-CANTER 3.4.1 · BORRADOR</small><input id="editorTitle" type="text" value="Nuevo clip" aria-label="Título del clip" /></div>
+      <div class="editor-title-wrap"><small>ABRXS-CANTER ETAPA 2 · BORRADOR</small><input id="editorTitle" type="text" value="Nuevo clip" aria-label="Título del clip" /></div>
       <div class="editor-history"><button id="undoEditorBtn" type="button" title="Deshacer">↶</button><button id="redoEditorBtn" type="button" title="Rehacer">↷</button><span id="editorAspect">16:9</span></div>
       <span id="editorSaveState" class="editor-save-state">Guardado local</span>
       <button id="applyEditorBtn" class="editor-apply" type="button">Aplicar y exportar <b>→</b></button>
@@ -132,6 +138,18 @@
       <p class="timeline-help">Arrastra los extremos de cada bloque para extenderlo o retraerlo sobre el video original. El timeline modifica datos; el video se procesa únicamente al exportar.</p>
     </section>
   </section>
+  <script src="activity.js"></script>
+  <script src="media.js"></script>
   <script src="app.js"></script>
+  <script src="processes.js"></script>
+  <script src="stage1-core.js"></script>
+  <script src="batch.js"></script>
+  <script src="vendor/split.js"></script>
+  <script src="vendor/panzoom.js"></script>
+  <script src="vendor/icons.js"></script>
+  <script src="floating-preview.js"></script>
+  <script src="stage1.js"></script>
+  <script src="ux.js"></script>
+  <script src="hotfix.js"></script>
 </body>
 </html>

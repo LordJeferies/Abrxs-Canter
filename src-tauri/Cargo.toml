@@ -1,6 +1,6 @@
 [package]
 name = "abrxs-canter"
-version = "3.4.1"
+version = "3.8.1"
 description = "Estudio local de transcripción, corte y revisión de clips"
 authors = ["abrxs-Canter"]
 edition = "2021"

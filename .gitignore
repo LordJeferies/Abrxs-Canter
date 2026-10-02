@@ -5,6 +5,9 @@
 
 # Rust / Tauri build products
 src-tauri/target/
+src-tauri/gen/
+engine/native/
+.build-cache/
 
 # Python-generated files and local environments
 __pycache__/
