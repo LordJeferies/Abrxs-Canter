@@ -179,7 +179,11 @@ def render_section(args, seconds, clip_id, index, total, section, count):
                         name, value = line.split("=", 1)
                         values[name] = value
                         if name == "progress":
-                            done = min(seconds, max(0, float(values.get("out_time_us", "0")) / 1e6))
+                            try:
+                                measured = finite(values.get("out_time_us", "0")) / 1e6
+                            except (ValueError, TypeError):
+                                continue  # FFmpeg may emit N/A before its first timestamp.
+                            done = min(seconds, max(0, measured))
                             elapsed = time.monotonic() - started
                             speed = done / elapsed if elapsed > 0 else 0
                             fraction = done / seconds if seconds else 0
@@ -196,6 +200,8 @@ def render_section(args, seconds, clip_id, index, total, section, count):
                 raise RuntimeError(errors.read().decode("utf-8", "replace") or "FFmpeg falló.")
         finally:
             stop_process()
+            if process.stdout:
+                process.stdout.close()
             ACTIVE_PROCESS = None
 
 
@@ -474,6 +480,9 @@ def import_editorial(req):
     import abraxas_local as engine
     data = source_data(req)
     pieces = engine.parse_editorial(Path(req["editorial"]))
+    if req.get("exportMode") == "compare_auto":
+        import auto_compare
+        return auto_compare.import_pieces(req, sys.modules[__name__], engine, data, pieces)
     words = [engine.Word(w["text"], w["start"], w["end"]) for w in data["words"]]
     for index, piece in enumerate(pieces):
         event("notice", detail=f"Verificando palabras de {piece.id} ({index+1}/{len(pieces)}). Fuente accesible; {len(words)} palabras con tiempos cargadas.")
@@ -601,6 +610,9 @@ def import_multi_master(req):
 
 
 def export_clips(req):
+    if req.get("exportMode") == "compare_auto":
+        import auto_compare
+        return auto_compare.run(req, sys.modules[__name__])
     root = root_for(req)
     ids = list(dict.fromkeys(req["ids"]))
     queue = {"requestId": REQUEST_ID, "ids": ids, "status": "running", "completed": [], "failed": []}
@@ -662,6 +674,12 @@ def export_clips(req):
     return queue
 
 
+def comparison_filename(clip, signature):
+    label = "_".join([str(clip.get("origin") or clip["id"]), str(clip["blocks"][0].get("role", "CLIP")), str(clip.get("outputOrientation") or clip.get("format", {}).get("aspect", "original")), clip["variant"]])
+    label = re.sub(r"[^\w-]", "_", label)
+    return f'{int(clip.get("comparisonOrder", 0)):03d}_{label}_{signature[:12]}.mp4'
+
+
 def export_one(root, clip, index=0, total=1, sections=False):
     import stage2
     source = source_identity(clip["source"]["path"])
@@ -719,12 +737,14 @@ def export_one(root, clip, index=0, total=1, sections=False):
         parts.append(target)
         event("progress", id=clip["id"], progress=round((index+(i+1)/(len(blocks)+1))/total*100),
               clipProgress=round((i+1)/(len(blocks)+1)*100), detail=f"Sección {i+1}/{len(blocks)} lista")
-    videos = root / "VIDEOS"
-    videos.mkdir(exist_ok=True)
+    videos = Path(clip["comparisonFolder"]) if clip.get("comparisonVariant") else root / "VIDEOS"
+    videos.mkdir(parents=True, exist_ok=True)
     safe = re.sub(r"[^\w -]", "_", clip["title"]).strip()[:70] or "Clip"
     signature = recipe_signature(clip)
     # Archivo inmutable por revisión: el anterior nunca se sobrescribe.
     final = videos / f'{safe}_{clip["id"][:8]}_{clip.get("variant", "MANUAL")}_r{clip["revision"]}_{signature[:8]}.mp4'
+    if clip.get("comparisonVariant"):
+        final = videos / comparison_filename(clip, signature)
     partial = final.with_suffix(".partial.mp4")
     fd, listing = tempfile.mkstemp(suffix=".concat.txt", dir=cache)
     try:
@@ -748,7 +768,7 @@ def export_one(root, clip, index=0, total=1, sections=False):
         os.replace(partial, final)
         latest = load_db(root)
         for saved in latest["clips"]:
-            if saved["id"] == clip["id"]:
+            if saved["id"] == clip["id"] and not clip.get("comparisonVariant"):
                 if saved.get("export") and saved["export"].get("path") != str(final):
                     saved.setdefault("exportHistory", []).append(saved["export"])
                 saved["export"] = {"path": str(final), "signature": signature, "revision": clip["revision"], "createdAt": time.time()}
@@ -778,11 +798,15 @@ def export_one(root, clip, index=0, total=1, sections=False):
     finally:
         partial.unlink(missing_ok=True)
         Path(listing).unlink(missing_ok=True)
+    return final
 
 
 def dispatch(req):
     op = req["op"]
     root = root_for(req)
+    if op == "export_storyboard":
+        import storyboard
+        return storyboard.export(req, sys.modules[__name__])
     if op.startswith("studio_"):
         import stage3
         return stage3.dispatch(req, sys.modules[__name__])

@@ -44,6 +44,9 @@
       "../engine/abraxas_local.py": "engine/abraxas_local.py",
       "../engine/transcript_quality.py": "engine/transcript_quality.py",
       "../engine/stage1.py": "engine/stage1.py",
+      "../engine/auto_compare.py": "engine/auto_compare.py",
+      "../engine/spoken_alignment.py": "engine/spoken_alignment.py",
+      "../engine/storyboard.py": "engine/storyboard.py",
       "../engine/stage2.py": "engine/stage2.py",
       "../engine/stage3.py": "engine/stage3.py",
       "../engine/native/abrxs-vision": "engine/native/abrxs-vision"

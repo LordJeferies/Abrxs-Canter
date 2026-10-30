@@ -439,7 +439,7 @@ async fn stage1_query(app: AppHandle, request: Value) -> Result<Value, String> {
 #[tauri::command]
 fn start_stage1_job(app: AppHandle, state: State<JobState>, request: Value) -> Result<(), String> {
     let operation = request.get("op").and_then(Value::as_str).unwrap_or("");
-    if !["export", "import", "assets", "visual", "studio_context", "studio_suggest"].contains(&operation) {
+    if !["export", "import", "assets", "visual", "studio_context", "studio_suggest", "export_storyboard"].contains(&operation) {
         return Err("Trabajo no permitido.".into());
     }
     let request_id = request.get("requestId").and_then(Value::as_str)

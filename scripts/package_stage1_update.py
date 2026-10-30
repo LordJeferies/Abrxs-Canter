@@ -10,10 +10,10 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 FILES = ['dist/app.js', 'dist/index.html', 'dist/stage1-core.js',
-         'dist/stage1.js', 'dist/stage1.css', 'engine/stage1.py',
+         'dist/stage1.js', 'dist/stage1.css', 'engine/stage1.py', 'engine/auto_compare.py', 'engine/spoken_alignment.py', 'engine/storyboard.py',
          'src-tauri/src/lib.rs', 'src-tauri/tauri.conf.json',
          'tests/test_stage1.py', 'tests/stage1-core.test.cjs',
-         'tests/smoke_stage1.py', 'ETAPA_1.md', 'scripts/package_stage1_update.py']
+         'tests/smoke_stage1.py', 'tests/test_auto_compare.py', 'tests/test_storyboard.py', 'tests/fixtures/pocaterra_intro_revisado.json', 'tests/fixtures/pocaterra_66.json', 'COMPARACION_AUTOMATICA.md', 'ETAPA_1.md', 'scripts/package_stage1_update.py']
 
 INSTALLER = r'''#!/bin/bash
 set -euo pipefail

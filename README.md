@@ -17,6 +17,10 @@ Abrxs-Canter es una aplicación local para macOS que convierte videos largos en 
 
 La versión `3.4.1` consolida la versión 3.4 utilizada en producción. Integra en el código fuente la corrección de reconstrucción de palabras y puntuación que antes estaba aplicada directamente sobre la aplicación instalada.
 
+## Actualización 3.8.1 · 30 de octubre de 2026
+
+Código sincronizado con la última copia de desarrollo de la Mac, incluidos los cambios del 24 de octubre: comparación automática optativa, variantes editoriales y alineadas por palabra, exportación de intros por párrafos, negros y reservas de voz, y reutilización de exportaciones completas. Consulta [COMPARACION_AUTOMATICA.md](COMPARACION_AUTOMATICA.md). La publicación del código no reemplaza la aplicación instalada.
+
 ## Funciones principales
 
 - Biblioteca local de proyectos independientes.

@@ -36,3 +36,7 @@ releases/
 *.mov
 *.mkv
 *.wav
+
+# Private regression transcripts remain local
+tests/fixtures/pocaterra_66.json
+tests/fixtures/pocaterra_intro_revisado.json

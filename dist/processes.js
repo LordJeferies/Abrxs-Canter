@@ -1,6 +1,6 @@
 /* Local serial queue. Recovery never restarts interrupted work without consent. */
 (()=>{
-  const key='abrxs-processes-v1',labels={import:'Crear fichas',export:'Exportar fichas',assets:'Miniaturas y audio',visual:'Análisis visual',studio_context:'Exportar contexto',studio_suggest:'Sugerencias'};
+  const key='abrxs-processes-v1',labels={export_storyboard:'Exportar intro por párrafos',import:'Crear fichas',export:'Exportar fichas',assets:'Miniaturas y audio',visual:'Análisis visual',studio_context:'Exportar contexto',studio_suggest:'Sugerencias'};
   let tasks=[],runner=null,active=null,starting=false;
   try{tasks=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(tasks))tasks=[];}catch{}
   tasks.forEach(t=>{if(['running','queued','cancelling'].includes(t.status))t.status='interrupted';});
